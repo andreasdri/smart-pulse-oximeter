@@ -1,0 +1,11 @@
+{
+  "name": "ble-test",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "aws-iot-device-sdk": "^1.0.14",
+    "gt511c3": "https://github.com/smo-key/GT-511C3.git",
+    "nonin-3230-ble": "^1.0.0"
+  }
+}
