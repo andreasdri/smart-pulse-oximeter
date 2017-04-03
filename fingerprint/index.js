@@ -9,7 +9,22 @@ const LED_OFF = 0x00,
 
 var buffer;
 
-const enrollAndRetrieveTemplate = () => (
+const blinkDelay = () => new Promise((resolve, reject) => setTimeout(resolve, 500));
+
+const errorHandler = (errorCode) => {
+  //try optimistic turning led off and close connction
+  fps.ledONOFF(LED_OFF).then(() => fps.close());
+
+  const error = fps.decodeError(errorCode);
+  if (error === '1:1 verification failure') {
+    throw new Error('Not authenticated');
+  } else {
+    throw new Error('Unknown error: ', errorCode, error);
+  }
+};
+
+
+const enrollFingerAndRetrieveTemplate = () => (
   fps.init()
     .then(() => fps.enroll(0))
     .then(() => fps.getTemplate(0))
@@ -17,10 +32,10 @@ const enrollAndRetrieveTemplate = () => (
       buffer = template; //upload template to aws
       return fps.close();
     })
-    .catch((error) => console.log(error, fps.decodeError(error)))
+    .catch(errorHandler)
 );
 
-const setTemplateAndVerify = (template) => ( //retrieve template from aws
+const setFingerprintTemplateAndVerify = (template) => ( //retrieve template from aws
   fps.init()
     //.then(() => fps.setTemplate(0, template || buffer))
     .then(() => fps.ledONOFF(LED_ON))
@@ -28,12 +43,15 @@ const setTemplateAndVerify = (template) => ( //retrieve template from aws
     .then(() => fps.captureFinger(NOT_BEST_IMAGE))
     .then(() => fps.verify(0))
     .then(() => fps.ledONOFF(LED_OFF))
+    .then(() => blinkDelay())
+    .then(() => fps.ledONOFF(LED_ON))
+    .then(() => fps.ledONOFF(LED_OFF))
     .then(() => fps.close())
-    .catch((error) => console.log(error, fps.decodeError(error)))
+    .catch(errorHandler)
 );
 
 module.exports = {
-  enrollAndRetrieveTemplate,
-  setTemplateAndVerify
+  enrollFingerAndRetrieveTemplate,
+  setFingerprintTemplateAndVerify
 };
 

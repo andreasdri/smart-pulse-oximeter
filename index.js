@@ -1,7 +1,10 @@
 const path = require('path');
-const Nonin3230 = require('nonin-3230-ble');
+const PulseOximeter = require('nonin-3230-ble');
 const awsIot = require('aws-iot-device-sdk');
-const { enrollAndRetrieveTemplate, setTemplateAndVerify } = require('./fingerprint');
+const { enrollFingerAndRetrieveTemplate, setFingerprintTemplateAndVerify }
+  = require('./fingerprint');
+
+const NUMBER_OF_SENSOR_READINGS = 15;
 
 const device = awsIot.device({
   keyPath: path.join(__dirname, 'certs/647f7ac5d9-private.pem.key'),
@@ -18,16 +21,36 @@ device
   .on('error', (err) => console.log('error', err))
   .on('message', (topic, payload) => console.log('message', topic, payload.toString()));
 
-Nonin3230.discover((pulseOximeter) => {
-  pulseOximeter.connectAndSetup((error) => {
-    if (error) {
-      console.error(error);
-    }
 
-    pulseOximeter.on('data', (data) => {
-      device.publish('oximetry', JSON.stringify(data));
+setFingerprintTemplateAndVerify()
+  .then(() => {
+    let timer;
+
+    const onDiscover = ((pulseOximeter) => {
+      pulseOximeter.connectAndSetup((error) => {
+        if (error) {
+          console.error(error);
+        }
+      });
+
+      let counter = 0;
+      pulseOximeter
+        .on('data', (data) => {
+          counter += 1;
+          device.publish('oximetry', JSON.stringify(data));
+          if (counter === NUMBER_OF_SENSOR_READINGS) {
+            clearTimeout(timer);
+            pulseOximeter.disconnect();
+          }
+        })
+        .on('disconnect', () => clearTimeout(timer));
+
     });
-  });
-});
 
-setTimeout(() => setTemplateAndVerify().then(() => console.log('usccesss')), 1000);
+    PulseOximeter.discover(onDiscover);
+
+    timer = setTimeout(() => {
+      PulseOximeter.stopDiscover(onDiscover);
+    }, 30000);
+
+  }, (error) => console.log(error));
