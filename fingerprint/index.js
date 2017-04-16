@@ -26,6 +26,7 @@ const errorHandler = (errorCode) => {
 
 const enrollFingerAndRetrieveTemplate = () => (
   fps.init()
+    .then(() => fps.deleteID(0))
     .then(() => fps.enroll(0))
     .then(() => fps.getTemplate(0))
     .then((template) => {

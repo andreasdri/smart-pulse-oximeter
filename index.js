@@ -1,56 +1,76 @@
-const path = require('path');
 const PulseOximeter = require('nonin-3230-ble');
 const awsIot = require('aws-iot-device-sdk');
+const { Button, RGBLed } = require('pigpio-components');
 const { enrollFingerAndRetrieveTemplate, setFingerprintTemplateAndVerify }
   = require('./fingerprint');
+const { awsConfig } = require('./config.js');
 
-const NUMBER_OF_SENSOR_READINGS = 15;
+const NUMBER_OF_SENSOR_READINGS = 20;
 
-const device = awsIot.device({
-  keyPath: path.join(__dirname, 'certs/647f7ac5d9-private.pem.key'),
-  certPath: path.join(__dirname, 'certs/647f7ac5d9-certificate.pem.crt'),
-  caPath: path.join(__dirname, 'certs/VeriSign-Class 3-Public-Primary-Certification-Authority-G5.pem'),
-  clientId: 'macbook-air',
-  region: 'eu-central-1'
-});
+const device = awsIot.device(awsConfig);
+const button = new Button({ gpio: 24, isPullup: true });
+const leftLed = new RGBLed({ red: 25, green: 8, blue: 7 });
+const rightLed = new RGBLed({ red: 17, green: 27, blue: 22 });
 
 device
   .on('connect', () => {
     device.subscribe('oximetry');
+    leftLed.color('blue').on();
+    rightLed.color('blue').on();
   })
   .on('error', (err) => console.log('error', err))
-  .on('message', (topic, payload) => console.log('message', topic, payload.toString()));
+  .on('message', (topic, payload) => console.log('msg', topic, payload.toString()));
 
 
-setFingerprintTemplateAndVerify()
-  .then(() => {
-    let timer;
+const startMeasurement = () => {
+  rightLed.color('blue').strobe();
+  setFingerprintTemplateAndVerify()
+    .then(() => {
+      rightLed.stop().color('green').on();
+      leftLed.color('blue').strobe();
+      let timer;
 
-    const onDiscover = ((pulseOximeter) => {
-      pulseOximeter.connectAndSetup((error) => {
-        if (error) {
-          console.error(error);
-        }
+      const onDiscover = ((pulseOximeter) => {
+        pulseOximeter.connectAndSetup((error) => {
+          if (error) {
+            console.error(error);
+          }
+        });
+
+        let counter = 0;
+        pulseOximeter
+          .on('data', (data) => {
+            leftLed.color('green').strobe();
+            counter += 1;
+            device.publish('oximetry', JSON.stringify(data));
+            if (counter === NUMBER_OF_SENSOR_READINGS) {
+              leftLed.color('blue').stop().off().on();
+              rightLed.color('blue').stop().off().on();
+              clearTimeout(timer);
+              pulseOximeter.disconnect();
+            }
+          })
+          .on('disconnect', () => clearTimeout(timer));
+
       });
 
-      let counter = 0;
-      pulseOximeter
-        .on('data', (data) => {
-          counter += 1;
-          device.publish('oximetry', JSON.stringify(data));
-          if (counter === NUMBER_OF_SENSOR_READINGS) {
-            clearTimeout(timer);
-            pulseOximeter.disconnect();
-          }
-        })
-        .on('disconnect', () => clearTimeout(timer));
+      PulseOximeter.discover(onDiscover);
 
+      timer = setTimeout(() => {
+        PulseOximeter.stopDiscover(onDiscover);
+      }, 30000);
+
+    }, (error) => console.log(error));
+};
+
+button.on('click', () => {
+  startMeasurement();
+});
+
+button.on('long press', () => {
+  enrollFingerAndRetrieveTemplate()
+    .then(() => {
+      console.log('fingerprint ok');
     });
+});
 
-    PulseOximeter.discover(onDiscover);
-
-    timer = setTimeout(() => {
-      PulseOximeter.stopDiscover(onDiscover);
-    }, 30000);
-
-  }, (error) => console.log(error));
