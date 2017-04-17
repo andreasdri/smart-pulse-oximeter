@@ -72,10 +72,12 @@ button.on('click', () => {
   startMeasurement();
 });
 
-button.on('long press', () => {
-  enrollFingerAndRetrieveTemplate()
-    .then(() => {
-      console.log('fingerprint ok');
-    });
-});
+if (process.env.NODE_ENV === "development") {
+  button.on('long press', () => {
+    enrollFingerAndRetrieveTemplate()
+      .then(() => {
+        console.log('fingerprint ok');
+      }, (error) => console.error('fingerprint not ok'));
+  });
+}
 
