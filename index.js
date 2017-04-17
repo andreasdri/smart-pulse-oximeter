@@ -7,6 +7,11 @@ const { awsConfig } = require('./config.js');
 
 const NUMBER_OF_SENSOR_READINGS = 20;
 
+/* Noble attaches a listener that interrupts the GPIO cleanup.
+ * The Noble listener does not do anything else than
+ * invoking process.exit(1) if it is the last listener, */
+process.removeListener('SIGINT', process.listeners('SIGINT')[0]);
+
 const device = awsIot.device(awsConfig);
 const button = new Button({ gpio: 24, isPullup: true });
 const leftLed = new RGBLed({ red: 25, green: 8, blue: 7 });
@@ -31,6 +36,7 @@ const startMeasurement = () => {
       let timer;
 
       const onDiscover = ((pulseOximeter) => {
+        leftLed.stop().color('green').strobe();
         pulseOximeter.connectAndSetup((error) => {
           if (error) {
             console.error(error);
@@ -40,12 +46,11 @@ const startMeasurement = () => {
         let counter = 0;
         pulseOximeter
           .on('data', (data) => {
-            leftLed.color('green').strobe();
             counter += 1;
             device.publish('oximetry', JSON.stringify(data));
             if (counter === NUMBER_OF_SENSOR_READINGS) {
-              leftLed.color('blue').stop().off().on();
-              rightLed.color('blue').stop().off().on();
+              leftLed.stop().color('blue').on();
+              rightLed.stop().color('blue').on();
               clearTimeout(timer);
               pulseOximeter.disconnect();
             }
