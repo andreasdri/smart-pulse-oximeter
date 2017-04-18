@@ -43,15 +43,38 @@ const setFingerprintTemplateAndVerify = (template) => ( //retrieve template from
     .then(() => fps.captureFinger(NOT_BEST_IMAGE))
     .then(() => fps.verify(0))
     .then(() => fps.ledONOFF(LED_OFF))
-    .then(() => blinkDelay())
+    .then(() => delay())
     .then(() => fps.ledONOFF(LED_ON))
     .then(() => fps.ledONOFF(LED_OFF))
     .then(() => fps.close())
     .catch(errorHandler)
 );
 
+const blinkingFingerprintLed = (duration = 20000) => {
+    fps.init()
+      .then(() => {
+        let on = true;
+        let timer = setInterval(() => {
+          console.log('invoked');
+          if (on) {
+            on = false;
+            fps.ledONOFF(LED_ON);
+          }
+          else {
+            on = true;
+            fps.ledONOFF(LED_OFF);
+          }
+        }, 1000);
+        setTimeout(() => {
+          clearInterval(timer);
+          fps.ledONOFF(LED_OFF).then(() => fps.close());
+        }, duration);
+      }).catch(errorHandler);
+};
+
 module.exports = {
   enrollFingerAndRetrieveTemplate,
-  setFingerprintTemplateAndVerify
+  setFingerprintTemplateAndVerify,
+  blinkingFingerprintLed
 };
 
