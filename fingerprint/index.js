@@ -1,4 +1,5 @@
 const GT511C3 = require('gt511c3');
+const { delay } = require('../utils.js');
 
 const fps = new GT511C3('/dev/ttyS0');
 
@@ -8,8 +9,6 @@ const LED_OFF = 0x00,
       BEST_IMAGE = 0x01;
 
 var buffer;
-
-const blinkDelay = () => new Promise((resolve, reject) => setTimeout(resolve, 500));
 
 const errorHandler = (errorCode) => {
   //try optimistic turning led off and close connction
