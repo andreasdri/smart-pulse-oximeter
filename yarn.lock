@@ -601,9 +601,9 @@ node-pre-gyp@^0.6.26, node-pre-gyp@^0.6.30:
     tar "^2.2.1"
     tar-pack "^3.4.0"
 
-nonin-3230-ble@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/nonin-3230-ble/-/nonin-3230-ble-1.0.0.tgz#b4676092c68c88ca115fab16027a7ec05efca1f5"
+nonin-3230-ble@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/nonin-3230-ble/-/nonin-3230-ble-1.1.0.tgz#7af1e63e11fbcc27bb78cae64f5869c2308a737e"
   dependencies:
     noble-device "^1.4.1"
 
@@ -686,9 +686,9 @@ performance-now@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/performance-now/-/performance-now-0.2.0.tgz#33ef30c5c77d4ea21c5a53869d91b56d8f2555e5"
 
-pigpio-components@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/pigpio-components/-/pigpio-components-1.0.0.tgz#8129ae9cbd74f95482f7619e8eb5d7c333d79307"
+pigpio-components@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/pigpio-components/-/pigpio-components-1.1.0.tgz#1bfdd16128a3f72699510cc6ad3d241077541857"
   dependencies:
     color "^1.0.3"
     pigpio "^0.5.1"

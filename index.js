@@ -1,6 +1,6 @@
 const PulseOximeter = require('nonin-3230-ble');
 const awsIot = require('aws-iot-device-sdk');
-const { Button, RGBLed } = require('pigpio-components');
+const { Button, RGBLed, Led } = require('pigpio-components');
 const { enrollFingerAndRetrieveTemplate, setFingerprintTemplateAndVerify,
   blinkingFingerprintLed } = require('./fingerprint');
 const { awsConfig } = require('./config.js');
@@ -17,68 +17,58 @@ const device = awsIot.device(awsConfig);
 const button = new Button({ gpio: 24, isPullup: true });
 const leftLed = new RGBLed({ red: 25, green: 8, blue: 7 });
 const rightLed = new RGBLed({ red: 17, green: 27, blue: 22 });
+const oximeterLed = new Led(12);
 
 device
   .on('connect', () => {
     device.subscribe('oximetry');
-    leftLed.color('blue').on();
-    rightLed.color('blue').on();
+    leftLed.color('yellow').strobe(2000);
+    rightLed.stop();
   })
   .on('error', (err) => console.log('error', err))
   .on('message', (topic, payload) => console.log('msg', topic, payload.toString()));
-
-/*
-setTimeout(() => {
-  blinkingFingerprintLed(10000);
-  leftLed.rainbow();
-  rightLed.rainbow();
-  setTimeout(() => {
-    leftLed.stop().color('blue').on();
-    rightLed.stop().color('blue').on();
-  }, 10000);
-}, 7000);
-*/
 
 
 const showErrorLeds = () => {
   leftLed.stop().color('red').on();
   rightLed.stop().color('red').on();
   delay(4000).then(() => {
-    rightLed.stop().color('blue').on();
-    leftLed.stop().color('blue').on();
+    rightLed.stop();
+    leftLed.stop().color('orange').strobe(2000);
   });
 };
 
 const startMeasurement = () => {
-  rightLed.color('blue').strobe();
+  leftLed.color('green').stop().on();
   setFingerprintTemplateAndVerify()
     .then(() => {
       rightLed.stop().color('green').on();
-      leftLed.color('blue').strobe();
+      oximeterLed.setValue(255);
       let timer;
+      let counter = 0;
 
       const onDiscover = ((pulseOximeter) => {
-        leftLed.color('green').strobe();
         pulseOximeter.connectAndSetup((error) => {
           if (error) {
             console.error(error);
           }
         });
 
-        let counter = 0;
         pulseOximeter
           .on('data', (data) => {
             counter += 1;
             device.publish('oximetry', JSON.stringify(data));
             if (counter === NUMBER_OF_SENSOR_READINGS) {
-              leftLed.stop().color('blue').on();
-              rightLed.color('blue').on();
+              leftLed.stop().color('yellow').strobe(2000);
+              rightLed.stop();
+              oximeterLed.off();
               clearTimeout(timer);
-              pulseOximeter.disconnect();
+              pulseOximeter.completeMeasurement();
             }
           })
           .on('disconnect', () => {
             if (counter < NUMBER_OF_SENSOR_READINGS) {
+              oximeterLed.off();
               showErrorLeds();
               clearTimeout(timer);
             }
@@ -89,9 +79,13 @@ const startMeasurement = () => {
       PulseOximeter.discover(onDiscover);
 
       timer = setTimeout(() => {
-        showErrorLeds();
+        if (counter < NUMBER_OF_SENSOR_READINGS) {
+          oximeterLed.off();
+          rightLed.off();
+          leftLed.color('yellow').strobe(2000);
+        }
         PulseOximeter.stopDiscover(onDiscover);
-      }, 30000);
+      }, 120000);
 
     },
     (error) => showErrorLeds());
@@ -103,11 +97,14 @@ button.on('click', () => {
 
 if (process.env.NODE_ENV === "development") {
   button.on('long press', () => {
-    rightLed.color('blue').strobe();
+    leftLed.color('green').on();
     enrollFingerAndRetrieveTemplate()
       .then(() => {
         rightLed.stop().color('green').on();
-        delay(4000).then(() => rightLed.color('blue').on());
+        delay(4000).then(() => {
+          leftLed.color('yellow').strobe(2000);
+          rightLed.stop();
+        });
       }, (error) => showErrorLeds());
   });
 }
