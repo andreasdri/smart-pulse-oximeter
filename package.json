@@ -5,7 +5,9 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "sudo NODE_ENV=development node index.js"
+    "start": "sudo NODE_ENV=development node index.js",
+    "deploy": "sudo pm2 start app.json",
+    "deploy:prod": "npm run deploy -- --env production"
   },
   "engines": {
     "node:": ">=4"
