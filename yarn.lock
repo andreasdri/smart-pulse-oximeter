@@ -563,13 +563,13 @@ ms@0.7.1:
   version "0.7.1"
   resolved "https://registry.yarnpkg.com/ms/-/ms-0.7.1.tgz#9cd13c03adbff25b65effde7ce864ee952017098"
 
-nan@^2.0.5, nan@^2.4.0, nan@~2.6.2:
-  version "2.6.2"
-  resolved "https://registry.yarnpkg.com/nan/-/nan-2.6.2.tgz#e4ff34e6c95fdfb5aecc08de6596f43605a7db45"
-
-nan@^2.3.3:
+nan@^2.0.5, nan@^2.3.3, nan@^2.4.0:
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.5.1.tgz#d5b01691253326a97a2bbee9e61c55d8d60351e2"
+
+nan@~2.6.2:
+  version "2.6.2"
+  resolved "https://registry.yarnpkg.com/nan/-/nan-2.6.2.tgz#e4ff34e6c95fdfb5aecc08de6596f43605a7db45"
 
 noble-device@^1.4.1:
   version "1.4.1"
@@ -686,9 +686,9 @@ performance-now@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/performance-now/-/performance-now-0.2.0.tgz#33ef30c5c77d4ea21c5a53869d91b56d8f2555e5"
 
-pigpio-components@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/pigpio-components/-/pigpio-components-1.1.0.tgz#1bfdd16128a3f72699510cc6ad3d241077541857"
+pigpio-components@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/pigpio-components/-/pigpio-components-1.1.1.tgz#ff5f36fc4c0388a42401673ad4bf31bddac1b24d"
   dependencies:
     color "^1.0.3"
     pigpio "^0.5.1"
