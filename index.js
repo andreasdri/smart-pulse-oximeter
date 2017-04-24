@@ -3,8 +3,9 @@ const awsIot = require('aws-iot-device-sdk');
 const { Button, RGBLed, Led } = require('pigpio-components');
 const { enrollFingerAndRetrieveTemplate, setFingerprintTemplateAndVerify,
   blinkingFingerprintLed } = require('./fingerprint');
-const { awsConfig } = require('./config.js');
-const { delay } = require('./utils.js');
+const { awsConfig } = require('./config');
+const { delay } = require('./utils');
+const logger = require('./logger');
 
 const NUMBER_OF_SENSOR_READINGS = 20;
 

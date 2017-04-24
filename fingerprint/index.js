@@ -1,5 +1,6 @@
 const GT511C3 = require('gt511c3');
-const { delay } = require('../utils.js');
+const { delay } = require('../utils');
+const logger = require('../logger');
 
 const fps = new GT511C3('/dev/ttyS0');
 
