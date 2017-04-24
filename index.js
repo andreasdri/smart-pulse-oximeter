@@ -22,12 +22,13 @@ const oximeterLed = new Led(12);
 
 device
   .on('connect', () => {
+    logger.log('debug', 'Connected to AWS');
     device.subscribe('oximetry');
     leftLed.color('yellow').strobe(2000);
     rightLed.stop();
   })
-  .on('error', (err) => console.log('error', err))
-  .on('message', (topic, payload) => console.log('msg', topic, payload.toString()));
+  .on('error', (err) => logger.error(err))
+  .on('message', (topic, payload) => logger.log('debug', 'Received message', topic, payload));
 
 
 const showErrorLeds = () => {
@@ -40,26 +41,31 @@ const showErrorLeds = () => {
 };
 
 const startMeasurement = () => {
+  logger.log('debug', 'Start measurement');
   leftLed.color('green').stop().on();
   setFingerprintTemplateAndVerify()
     .then(() => {
+      logger.log('debug', 'Fingerprint verified');
       rightLed.stop().color('green').on();
       oximeterLed.setValue(255);
       let timer;
       let counter = 0;
 
       const onDiscover = ((pulseOximeter) => {
+        logger.log('debug', 'Pulse oximeter discovered');
         pulseOximeter.connectAndSetup((error) => {
           if (error) {
-            console.error(error);
+            logger.error(error);
           }
         });
 
         pulseOximeter
           .on('data', (data) => {
+            logger.log('info', 'Pulse oximeter data', data);
             counter += 1;
             device.publish('oximetry', JSON.stringify(data));
             if (counter === NUMBER_OF_SENSOR_READINGS) {
+              logger.log('debug', 'Finished measurement. Cleaning up');
               leftLed.stop().color('yellow').strobe(2000);
               rightLed.stop();
               oximeterLed.off();
@@ -68,7 +74,9 @@ const startMeasurement = () => {
             }
           })
           .on('disconnect', () => {
+            logger.log('debug', 'Pulse oximeter disconnect');
             if (counter < NUMBER_OF_SENSOR_READINGS) {
+              logger.log('debug', 'Pulse oximeter disconnect before completion');
               oximeterLed.off();
               showErrorLeds();
               clearTimeout(timer);
@@ -81,15 +89,20 @@ const startMeasurement = () => {
 
       timer = setTimeout(() => {
         if (counter < NUMBER_OF_SENSOR_READINGS) {
+          logger.log('debug', 'Pulse oximeter disconnect before completion');
           oximeterLed.off();
           rightLed.off();
           leftLed.color('yellow').strobe(2000);
         }
+        logger.log('debug', 'Pulse oximeter: Stopping discover');
         PulseOximeter.stopDiscover(onDiscover);
       }, 120000);
 
     },
-    (error) => showErrorLeds());
+    (error) => {
+      logger.error(error);
+      showErrorLeds()
+    });
 };
 
 button.on('click', () => {
@@ -97,16 +110,24 @@ button.on('click', () => {
 });
 
 if (process.env.NODE_ENV === "development") {
+  logger.log('debug', 'Environment: development');
+
   button.on('long press', () => {
+    logger.log('debug', 'Button: Long press');
     leftLed.color('green').on();
     enrollFingerAndRetrieveTemplate()
       .then(() => {
+        logger.log('debug', 'Fingerprint stored');
         rightLed.stop().color('green').on();
         delay(4000).then(() => {
           leftLed.color('yellow').strobe(2000);
           rightLed.stop();
         });
-      }, (error) => showErrorLeds());
+      }, (error) => {
+        logger.error(error);
+        showErrorLeds()
+      }
+      );
   });
 }
 

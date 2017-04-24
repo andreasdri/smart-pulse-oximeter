@@ -16,6 +16,8 @@ const errorHandler = (errorCode) => {
   fps.ledONOFF(LED_OFF).then(() => fps.close());
 
   const error = fps.decodeError(errorCode);
+  logger.log('debug', 'Error handler', errorCode, error);
+
   if (error === '1:1 verification failure') {
     throw new Error('Not authenticated');
   } else {
@@ -27,6 +29,15 @@ const errorHandler = (errorCode) => {
 const enrollFingerAndRetrieveTemplate = () => (
   fps.init()
     .then(() => fps.deleteID(0))
+    .catch((error) => {
+      const errCode = fps.decodeError(error);
+      logger.log('debug', 'Enroll finger', error, errCode);
+      if (errCode === 'the database is empty'
+          || errCode === 'the specified ID is not between 0-199') {
+        return Promise.resolve();
+      }
+      return Promise.reject();
+    })
     .then(() => fps.enroll(0))
     .then(() => fps.getTemplate(0))
     .then((template) => {
